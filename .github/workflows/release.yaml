@@ -7,12 +7,12 @@ on:
         description: 'Node.js version to use'
         required: false
         type: string
-        default: '20'
+        default: '22'
       pnpm-version:
         description: 'pnpm version to use'
         required: false
         type: string
-        default: '8'
+        default: '9'
 
 permissions:
   packages: write
@@ -58,6 +58,11 @@ jobs:
 
       - name: Build package
         run: pnpm build
+
+      - name: debug
+        run: |
+          git status
+          git --no-pager diff
 
       - name: Publish to GitHub Packages
         run: pnpm publish
