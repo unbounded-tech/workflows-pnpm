@@ -1,0 +1,82 @@
+name: pnpm quality
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        description: 'Node.js version to use'
+        required: false
+        type: string
+        default: '22'
+      pnpm-version:
+        description: 'pnpm version to use'
+        required: false
+        type: string
+        default: '8'
+
+      test:
+        description: 'Run tests'
+        required: false
+        type: boolean
+        default: true
+
+      typecheck:
+        description: 'Run type check'
+        required: false
+        type: boolean
+        default: true
+      
+      lint:
+        description: 'Run lint'
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  quality:
+    runs-on: runs-on=${{ github.run_id }}/runner=2cpu-linux-x64/extras=s3-cache
+
+    steps:
+      - uses: runs-on/action@v1
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: ${{ inputs.pnpm-version }}
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Run tests
+        if: ${{ inputs.test }}
+        run: pnpm test
+
+      - name: Type check
+        if: ${{ inputs.typecheck }}
+        run: pnpm typecheck
+
+      - name: Lint
+        if: ${{ inputs.lint }}
+        run: pnpm lint
