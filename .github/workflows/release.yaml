@@ -60,7 +60,9 @@ jobs:
         run: pnpm build
 
       - name: debug
-        run: git status
+        run: |
+          git status
+          git --no-pager diff
 
       - name: Publish to GitHub Packages
         run: pnpm publish
